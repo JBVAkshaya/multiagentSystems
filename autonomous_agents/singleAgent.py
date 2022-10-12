@@ -317,7 +317,9 @@ if __name__ == "__main__":
             'yanchor': 'top'},
     xaxis_title="Trial ------->",
     yaxis_title="Reward ------->",
-    legend_title="N")
+    legend_title="N",
+    legend_font_size = 18,
+    font = dict(size=20))
     
     fig.show()
     # fig.write_image("reward_over_5_trials_2_3.png")

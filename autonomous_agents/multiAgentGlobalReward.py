@@ -243,7 +243,7 @@ class qLearning:
         self.action_a2 = self.chooseActionA1()
         self.states_a2 = [(self.StateA2.state[0],self.StateA2.state[1],self.actions_lookup[self.action_a2])]
 
-    def play(self, num_episodes=1, num_steps = 40):
+    def play(self, num_episodes=1, num_steps = 20):
         i = 0
         curr_steps = 0
         rewards_a1 = []
@@ -288,10 +288,6 @@ class qLearning:
                     # print("current position {} action {}".format(self.State.state, action))
 
                     # by taking the action, it reaches the next state
-                    reward_by_a1 = self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])] + \
-                                self.alpha*(curr_reward_a1 + \
-                                (self.gamma*self.state_values_a1[(nxt_state_a1[0], nxt_state_a1[1], self.actions_lookup[nxt_action_a1])]) - \
-                                self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])])            
                     # mark is end
 
                     # Agent 2
@@ -309,15 +305,21 @@ class qLearning:
                     # print("current position {} action {}".format(self.State.state, action))
 
                     # by taking the action, it reaches the next state
+                    reward_by_a1 = self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])] + \
+                                self.alpha*((curr_reward_a1 + curr_reward_a2) + \
+                                (self.gamma*self.state_values_a1[(nxt_state_a1[0], nxt_state_a1[1], self.actions_lookup[nxt_action_a1])]) - \
+                                self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])])            
+                    
+
                     reward_by_a2 = self.state_values_a2[(curr_state_a2[0], curr_state_a2[1], self.actions_lookup[curr_action_a2])] + \
-                                self.alpha*(curr_reward_a2 + \
+                                self.alpha*((curr_reward_a1 + curr_reward_a2) + \
                                 (self.gamma*self.state_values_a2[(nxt_state_a2[0], nxt_state_a2[1], self.actions_lookup[nxt_action_a2])]) - \
                                 self.state_values_a2[(curr_state_a2[0], curr_state_a2[1], self.actions_lookup[curr_action_a2])])
                     # mark is end
 
-                    global_reward = reward_by_a1 + reward_by_a2
-                    self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])] = global_reward
-                    self.state_values_a2[(curr_state_a2[0], curr_state_a2[1], self.actions_lookup[curr_action_a2])] = global_reward
+                    # global_reward = reward_by_a1 + reward_by_a2
+                    self.state_values_a1[(curr_state_a1[0], curr_state_a1[1], self.actions_lookup[curr_action_a1])] = reward_by_a1
+                    self.state_values_a2[(curr_state_a2[0], curr_state_a2[1], self.actions_lookup[curr_action_a2])] = reward_by_a2
                     curr_steps = curr_steps + 1
                 except:
                     print("failed episode")
@@ -327,7 +329,7 @@ class qLearning:
                     WIN_STATE = [(1, 3),(2,2)]
         return rewards_a1, rewards_a2
 
-    def evaluate_a1(self,state, target_met, num_steps = 40):
+    def evaluate_a1(self,state, target_met, num_steps = 20):
         try:
             self.start_a1(state)
             curr_steps = 0
@@ -358,7 +360,7 @@ class qLearning:
         except:
             raise
     
-    def evaluate_a2(self,state, target_met, num_steps = 40):
+    def evaluate_a2(self,state, tar_met, num_steps = 20):
         try:
             self.start_a2(state)
             curr_steps = 0
@@ -378,10 +380,10 @@ class qLearning:
                 # by taking the action, it reaches the next state
                 # mark is end
                 if nxt_state in WIN_STATE:
-                    if nxt_state not in target_met:
-                        target_met.append(nxt_state)
+                    if nxt_state not in tar_met:
+                        tar_met.append(nxt_state)
                         new_target.append(nxt_state)
-                isEnd = len(target_met)==len(WIN_STATE)
+                isEnd = len(tar_met)==len(WIN_STATE)
                 curr_steps = curr_steps + 1
             
             reward = len(new_target)*20 + (-1*(len(states_a2)-len(new_target)))
@@ -398,39 +400,39 @@ if __name__ == "__main__":
 
     #### Sample Random valid Start State
     start_state = (0,0)
-    num_episodes = 10
+    num_episodes = 600
     ch_ag_1 = qLearning(start_state)
     rewards_agent1, rewards_agent2 = ch_ag_1.play(num_episodes=num_episodes)
 
     x = np.linspace(1,num_episodes,num_episodes)
-    fig_sarsa = go.Figure()
-    fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent1, mode='markers', name="Q-Learning"))
-    fig_sarsa.update_layout(
-    title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
-            'y':0.9,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'},
-    xaxis_title="Episode --------->",
-    yaxis_title="Reward -------->",
-    legend_title="N")
+    # fig_sarsa = go.Figure()
+    # fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent1, mode='markers', name="Q-Learning"))
+    # fig_sarsa.update_layout(
+    # title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
+    #         'y':0.9,
+    #         'x':0.5,
+    #         'xanchor': 'center',
+    #         'yanchor': 'top'},
+    # xaxis_title="Episode --------->",
+    # yaxis_title="Reward -------->",
+    # legend_title="N")
     
-    fig_sarsa.show()
+    # fig_sarsa.show()
 
-    x = np.linspace(1,num_episodes,num_episodes)
-    fig_sarsa = go.Figure()
-    fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent2, mode='markers', name="Q-Learning"))
-    fig_sarsa.update_layout(
-    title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
-            'y':0.9,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'},
-    xaxis_title="Episode --------->",
-    yaxis_title="Reward -------->",
-    legend_title="N")
+    # x = np.linspace(1,num_episodes,num_episodes)
+    # fig_sarsa = go.Figure()
+    # fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent2, mode='markers', name="Q-Learning"))
+    # fig_sarsa.update_layout(
+    # title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
+    #         'y':0.9,
+    #         'x':0.5,
+    #         'xanchor': 'center',
+    #         'yanchor': 'top'},
+    # xaxis_title="Episode --------->",
+    # yaxis_title="Reward -------->",
+    # legend_title="N")
     
-    fig_sarsa.show()
+    # fig_sarsa.show()
     # fig_sarsa.write_image("ChangingWinStateQLearning.png")
 
     eval_on = [(1,7),(3,8),(2,5),(1,6),(2,8),(1,8),(4,8),(3,5),(2,6),(2,9),(0,7),(1,5),(3,3),(2,4),(1,5),(2,7),(1,0),(4,2),(3,7),(2,3)]
@@ -443,6 +445,7 @@ if __name__ == "__main__":
             target_met = []
             eval_a1, target_met = ch_ag_1.evaluate_a1(st, target_met)
             eval_a2, new_target = ch_ag_1.evaluate_a2(st, target_met)
+            print(target_met, new_target)
             rewards_a1_eval.append(len(target_met))
             rewards_a2_eval.append(len(new_target))
             global_eval.append(len(target_met)+len(new_target))
@@ -452,19 +455,53 @@ if __name__ == "__main__":
     x = np.linspace(1, len(eval_on), len(eval_on))
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Number of Met Targets by Agent 1"))
-    fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Number of Met Targets by Agent 2"))
+    # fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Number of Met Targets by Agent 1"))
+    # fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Number of Met Targets by Agent 2"))
     fig.add_trace(go.Scatter(x=x, y=global_eval, mode='markers', name="Total Number of Met Targets"))
     num_trials = str(len(rewards_a1_eval))
     fig.update_layout(
-    title={'text':"Reward over "+num_trials+"  trials",
-            'y':0.9,
+    title={'text':"Reward over "+num_trials+"  trials (Global Reward)",
+            'y':0.95,
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top'},
     xaxis_title="Trial ------->",
     yaxis_title="Number of Targets ------->",
-    legend_title="N")
+    legend= dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1),
+    legend_font_size = 18,
+    font = dict(size=20)
+    )
     
     fig.show()
-    # fig.write_image("reward_over_5_trials_2_3.png")
+    # fig.write_image("global_all.png")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Number of Met Targets by Agent 1"))
+    fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Number of Met Targets by Agent 2"))
+    # fig.add_trace(go.Scatter(x=x, y=global_eval, mode='markers', name="Total Number of Met Targets"))
+    num_trials = str(len(rewards_a1_eval))
+    fig.update_layout(
+    title={'text':"Reward over "+num_trials+"  trials (Global Reward)",
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'},
+    xaxis_title="Trial ------->",
+    yaxis_title="Number of Targets ------->",
+    legend= dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1),
+    legend_font_size = 18,
+    font = dict(size=20)
+    )
+    
+    fig.show()
+    # fig.write_image("global_each.png")

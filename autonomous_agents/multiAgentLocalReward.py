@@ -253,8 +253,8 @@ class qLearning:
                     reward_a1 = self.StateA1.generateReward()
                     # explicitly assign end state to reward values
                     self.state_values_a1[(self.StateA1.state[0], self.StateA1.state[1], self.actions_lookup[self.action_a1])] = reward_a1
-                    
-                    rewards_a1.append(self.evaluate_a1((0,0)))
+                    eva_a1,_ = self.evaluate_a1((0,0),[])
+                    rewards_a1.append(eva_a1)
                     flag_a1 = True
             if (self.isEndA2) or (curr_steps == num_steps):
                 if flag_a2 == False:
@@ -263,7 +263,8 @@ class qLearning:
                     # explicitly assign end state to reward values
                     self.state_values_a2[(self.StateA2.state[0], self.StateA2.state[1], self.actions_lookup[self.action_a2])] = reward_a2
                     
-                    rewards_a2.append(self.evaluate_a2((0,0)))
+                    eva_a2 = self.evaluate_a2((0,0),[])
+                    rewards_a2.append(eva_a2)
                     flag_a2 = True
 
             if (self.isEndA1 and self.isEndA2) or (curr_steps == num_steps):
@@ -325,51 +326,69 @@ class qLearning:
                 curr_steps = curr_steps + 1
         return rewards_a1, rewards_a2
 
-    def evaluate_a1(self,state, num_steps = 20):
-        self.start_a1(state)
-        curr_steps = 0
-        isEnd = False
-        while not ((isEnd) or (curr_steps == num_steps)):
-            # print(self.State.isEnd, curr_steps)
-            curr_action = self.action_a1
-            self.StateA1 = self.takeActionA1(curr_action) ## Update to next state
-            nxt_state = self.StateA1.state
-            nxt_action = self.chooseActionA1()
-            self.action_a1 = nxt_action
-            self.states_a1.append((nxt_state[0],nxt_state[1],self.actions_lookup[nxt_action]))
-            # print("nxt state: ", nxt_state, nxt_action)
-            # print("current position {} action {}".format(self.State.state, action))
-            # by taking the action, it reaches the next state
-            # mark is end
-            isEnd = self.StateA1.isEndFuncEval()
-            curr_steps = curr_steps + 1
-        reward = self.StateA1.totalReward(self.states_a1)
-        print("Eval: all states A1: ", self.states_a1)
-        print("Eval Rewards A1: ", reward)
-        return reward
+    def evaluate_a1(self,state, target_met, num_steps = 20):
+            try:
+                self.start_a1(state)
+                curr_steps = 0
+                isEnd = False
+                states_a1 = []
+                while not ((isEnd) or (curr_steps == num_steps)):
+                    # print(self.State.isEnd, curr_steps)
+                    curr_action = self.action_a1
+                    self.StateA1 = self.takeActionA1(curr_action) ## Update to next state
+                    nxt_state = self.StateA1.state
+                    nxt_action = self.chooseActionA1()
+                    self.action_a1 = nxt_action
+                    states_a1.append(nxt_state)
+                    # print("nxt state: ", nxt_state, nxt_action)
+                    # print("current position {} action {}".format(self.State.state, action))
+                    # by taking the action, it reaches the next state
+                    # mark is end
+                    if nxt_state in WIN_STATE:
+                        if nxt_state not in target_met:
+                            target_met.append(nxt_state)
+                    isEnd = len(target_met)==len(WIN_STATE)
+                    curr_steps = curr_steps + 1
+                
+                reward = len(target_met)*20 + (-1*(len(states_a1)-len(target_met)))
+                print("Eval: all states A1: ", self.states_a1)
+                print("Eval Rewards A1: ", reward)
+                return reward, target_met
+            except:
+                raise
     
-    def evaluate_a2(self,state, num_steps = 20):
-        self.start_a2(state)
-        curr_steps = 0
-        isEnd = False
-        while not ((isEnd) or (curr_steps == num_steps)):
-            # print(self.State.isEnd, curr_steps)
-            curr_action = self.action_a2
-            self.StateA2 = self.takeActionA2(curr_action) ## Update to next state
-            nxt_state = self.StateA2.state
-            nxt_action = self.chooseActionA2()
-            self.action_a2 = nxt_action
-            self.states_a2.append((nxt_state[0],nxt_state[1],self.actions_lookup[nxt_action]))
-            # print("nxt state: ", nxt_state, nxt_action)
-            # print("current position {} action {}".format(self.State.state, action))
-            # by taking the action, it reaches the next state
-            # mark is end
-            isEnd = self.StateA2.isEndFuncEval()
-            curr_steps = curr_steps + 1
-        reward = self.StateA2.totalReward(self.states_a2)
-        print("Eval: all states A2: ", self.states_a2)
-        print("Eval Rewards A2: ", reward)
-        return reward
+    def evaluate_a2(self,state, tar_met, num_steps = 20):
+        try:
+            self.start_a2(state)
+            curr_steps = 0
+            isEnd = False
+            states_a2 = []
+            new_target = []
+            while not ((isEnd) or (curr_steps == num_steps)):
+                # print(self.State.isEnd, curr_steps)
+                curr_action = self.action_a2
+                self.StateA2 = self.takeActionA2(curr_action) ## Update to next state
+                nxt_state = self.StateA2.state
+                nxt_action = self.chooseActionA2()
+                self.action_a2 = nxt_action
+                states_a2.append(nxt_state)
+                # print("nxt state: ", nxt_state, nxt_action)
+                # print("current position {} action {}".format(self.State.state, action))
+                # by taking the action, it reaches the next state
+                # mark is end
+                if nxt_state in WIN_STATE:
+                    if nxt_state not in tar_met:
+                        tar_met.append(nxt_state)
+                        new_target.append(nxt_state)
+                isEnd = len(tar_met)==len(WIN_STATE)
+                curr_steps = curr_steps + 1
+            
+            reward = len(new_target)*20 + (-1*(len(states_a2)-len(new_target)))
+            # print("Eval: all states A2: ", self.states_a2)
+            print("Eval Rewards A2: ", reward)
+            return reward, new_target
+        except:
+            raise
 
 if __name__ == "__main__":
     # s1 = State(state=(3,3))
@@ -378,62 +397,108 @@ if __name__ == "__main__":
 
     #### Sample Random valid Start State
     start_state = (0,0)
-    num_episodes = 5000
+    num_episodes = 600
     ch_ag_1 = qLearning(start_state)
     rewards_agent1, rewards_agent2 = ch_ag_1.play(num_episodes=num_episodes)
 
     x = np.linspace(1,num_episodes,num_episodes)
-    fig_sarsa = go.Figure()
-    fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent1, mode='markers', name="Q-Learning"))
-    fig_sarsa.update_layout(
-    title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
-            'y':0.9,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'},
-    xaxis_title="Episode --------->",
-    yaxis_title="Reward -------->",
-    legend_title="N")
+    # fig_sarsa = go.Figure()
+    # fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent1, mode='markers', name="Q-Learning"))
+    # fig_sarsa.update_layout(
+    # title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
+    #         'y':0.9,
+    #         'x':0.5,
+    #         'xanchor': 'center',
+    #         'yanchor': 'top'},
+    # xaxis_title="Episode --------->",
+    # yaxis_title="Reward -------->",
+    # legend_title="N")
     
-    fig_sarsa.show()
+    # fig_sarsa.show()
 
-    x = np.linspace(1,num_episodes,num_episodes)
-    fig_sarsa = go.Figure()
-    fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent2, mode='markers', name="Q-Learning"))
-    fig_sarsa.update_layout(
-    title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
-            'y':0.9,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'},
-    xaxis_title="Episode --------->",
-    yaxis_title="Reward -------->",
-    legend_title="N")
+    # x = np.linspace(1,num_episodes,num_episodes)
+    # fig_sarsa = go.Figure()
+    # fig_sarsa.add_trace(go.Scatter(x=x, y=rewards_agent2, mode='markers', name="Q-Learning"))
+    # fig_sarsa.update_layout(
+    # title={'text':"Reward for 1000 episodes Q-learning Changing Win State",
+    #         'y':0.9,
+    #         'x':0.5,
+    #         'xanchor': 'center',
+    #         'yanchor': 'top'},
+    # xaxis_title="Episode --------->",
+    # yaxis_title="Reward -------->",
+    # legend_title="N")
     
-    fig_sarsa.show()
+    # fig_sarsa.show()
     # fig_sarsa.write_image("ChangingWinStateQLearning.png")
 
     eval_on = [(1,7),(3,8),(2,5),(1,6),(2,8),(1,8),(4,8),(3,5),(2,6),(2,9),(0,7),(1,5),(3,3),(2,4),(1,5),(2,7),(1,0),(4,2),(3,7),(2,3)]
     rewards_a1_eval = []
     rewards_a2_eval =[]
+    global_eval = []
 
     for st in eval_on:
-        rewards_a1_eval.append(ch_ag_1.evaluate_a1(st))
-        rewards_a2_eval.append(ch_ag_1.evaluate_a2(st))
+        try:
+            target_met = []
+            eval_a1, target_met = ch_ag_1.evaluate_a1(st, target_met)
+            eval_a2, new_target = ch_ag_1.evaluate_a2(st, target_met)
+            print(target_met, new_target)
+            rewards_a1_eval.append(len(target_met))
+            rewards_a2_eval.append(len(new_target))
+            global_eval.append(len(target_met)+len(new_target))
+        except:
+            pass
+        
     x = np.linspace(1, len(eval_on), len(eval_on))
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Agent 1 Rewards"))
-    fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Agent 2 Rewards"))
+    # fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Number of Met Targets by Agent 1"))
+    # fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Number of Met Targets by Agent 2"))
+    fig.add_trace(go.Scatter(x=x, y=global_eval, mode='markers', name="Total Number of Met Targets"))
+    num_trials = str(len(rewards_a1_eval))
     fig.update_layout(
-    title={'text':"Reward over 20 trials",
-            'y':0.9,
+    title={'text':"Reward over "+num_trials+"  trials (Local Reward)",
+            'y':0.95,
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top'},
     xaxis_title="Trial ------->",
-    yaxis_title="Reward ------->",
-    legend_title="N")
+    yaxis_title="Number of Targets ------->",
+    legend= dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1),
+    legend_font_size = 18,
+    font = dict(size=20)
+    )
     
     fig.show()
-    # fig.write_image("reward_over_5_trials_2_3.png")
+    # fig.write_image("local_all.png")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=rewards_a1_eval, mode='markers', name="Number of Met Targets by Agent 1"))
+    fig.add_trace(go.Scatter(x=x, y=rewards_a2_eval, mode='markers', name="Number of Met Targets by Agent 2"))
+    # fig.add_trace(go.Scatter(x=x, y=global_eval, mode='markers', name="Total Number of Met Targets"))
+    num_trials = str(len(rewards_a1_eval))
+    fig.update_layout(
+    title={'text':"Reward over "+num_trials+"  trials (Local Reward)",
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'},
+    xaxis_title="Trial ------->",
+    yaxis_title="Number of Targets ------->",
+    legend= dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1),
+    legend_font_size = 18,
+    font = dict(size=20)
+    )
+    
+    fig.show()
+    # fig.write_image("local_each.png")
